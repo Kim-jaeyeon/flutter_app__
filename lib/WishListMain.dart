@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_app/main.dart';
@@ -8,7 +9,7 @@ class WishList {
   bool isChosen = false;
   String title;
 
-  WishList(this.title);
+  WishList(this.title, {this.isChosen=false});//isChosen 프로퍼티를 옵셔널 프로퍼티로 고치고 기본값을 false로 설정
 }
 
 class MyApp extends StatelessWidget {
@@ -67,11 +68,19 @@ class _WishListMainState extends State<WishListMain> {
                 ),
               ],
             ),
-            Expanded(
-                child: ListView(
-                  children: _items.map((wishlist) => _buildItemWidget(wishlist))
-                      .toList(),
-                )),
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance.collection('toget').snapshots(),
+              builder: (context, snapshot) {
+                if(!snapshot.hasData){
+                  return CircularProgressIndicator();
+                }
+                final documents=snapshot.data!.docs;
+                return Expanded(
+                    child: ListView(
+                      children: documents.map((doc) => _buildItemWidget(doc)).toList(),
+                    ));
+              }
+            ),
           ],
         ),
       ),
@@ -79,7 +88,8 @@ class _WishListMainState extends State<WishListMain> {
   }
 
   //할 일 객체를 ListTile 형태로 변경하는 메서드
-  Widget _buildItemWidget(WishList wishlist) {
+  Widget _buildItemWidget(DocumentSnapshot doc) {
+    final wishlist=WishList(doc['title'],isChosen: doc['isChosen']);
     return ListTile(
       onTap: () =>_toggleToget(wishlist),
       title: Text(

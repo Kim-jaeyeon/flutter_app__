@@ -5,7 +5,8 @@ import 'package:flutter_app/StopWatch.dart';
 import 'package:flutter_app/BmiMain.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter_app/WishListMain.dart';
-
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 final dummyItems = [
   'assets/IMG_9303.jpg',
@@ -15,7 +16,9 @@ final dummyItems = [
   'assets/IMG_5158.JPG',
 ];
 
-void main() {
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(); //Firebase 초기화
   runApp(MyApp());
 }
 
