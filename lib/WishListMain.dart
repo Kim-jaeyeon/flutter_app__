@@ -9,7 +9,8 @@ class WishList {
   bool isChosen = false;
   String title;
 
-  WishList(this.title, {this.isChosen=false});//isChosen 프로퍼티를 옵셔널 프로퍼티로 고치고 기본값을 false로 설정
+  WishList(this.title,
+      {this.isChosen = false}); //isChosen 프로퍼티를 옵셔널 프로퍼티로 고치고 기본값을 false로 설정
 }
 
 class MyApp extends StatelessWidget {
@@ -35,7 +36,6 @@ class WishListMain extends StatefulWidget {
 }
 
 class _WishListMainState extends State<WishListMain> {
-  final _items = <WishList>[]; //찜 목록을 저장할 리스트
 
   var _togetController = TextEditingController();
 
@@ -61,26 +61,27 @@ class _WishListMainState extends State<WishListMain> {
                     controller: _togetController,
                   ),
                 ),
-                CupertinoButton(child: Text('추가'),
-                    onPressed: () =>
-                        _addToget(WishList(_togetController.text))
+                CupertinoButton(
+                    child: Text('추가'),
+                    onPressed: () => _addToget(WishList(_togetController.text))
                     //
-                ),
+                    ),
               ],
             ),
             StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('toget').snapshots(),
-              builder: (context, snapshot) {
-                if(!snapshot.hasData){
-                  return CircularProgressIndicator();
-                }
-                final documents=snapshot.data!.docs;
-                return Expanded(
-                    child: ListView(
-                      children: documents.map((doc) => _buildItemWidget(doc)).toList(),
-                    ));
-              }
-            ),
+                stream:
+                    FirebaseFirestore.instance.collection('toget').snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return CircularProgressIndicator();
+                  }
+                  final documents = snapshot.data!.docs; //여기에 ?를 넣으면 왜 오류가 뜰까
+                  return Expanded(
+                      child: ListView(
+                    children:
+                        documents.map((doc) => _buildItemWidget(doc)).toList(),
+                  ));
+                }),
           ],
         ),
       ),
@@ -89,47 +90,41 @@ class _WishListMainState extends State<WishListMain> {
 
   //할 일 객체를 ListTile 형태로 변경하는 메서드
   Widget _buildItemWidget(DocumentSnapshot doc) {
-    final wishlist=WishList(doc['title'],isChosen: doc['isChosen']);
+    final wishlist = WishList(doc['title'], isChosen: doc['isChosen']);
     return ListTile(
-      onTap: () =>_toggleToget(wishlist),
+      onTap: () => _toggleToget(doc),
       title: Text(
         wishlist.title,
         style: wishlist.isChosen
             ? TextStyle(
-          decoration: TextDecoration.lineThrough, //취소선
-          fontStyle: FontStyle.italic, //이탤릭체
-        )
+                decoration: TextDecoration.lineThrough, //취소선
+                fontStyle: FontStyle.italic, //이탤릭체
+              )
             : null,
       ),
       trailing: IconButton(
         icon: Icon(Icons.delete_forever_outlined),
-        onPressed: () => _deleteToget(wishlist),
+        onPressed: () => _deleteToget(doc),
       ),
     );
   }
 
   void _addToget(WishList wishlist) {
-    setState(() {
-      _items.add(wishlist);
-      _togetController.text = ''; //할 일 입력 필드를 비움
-    });
+    FirebaseFirestore.instance
+        .collection('toget')
+        .add({'title': wishlist.title, 'isChosen': wishlist.isChosen});
+    _togetController.text = '';
   }
 
   //할 일 삭제 메소드
-  void _deleteToget(WishList wishlist) {
-    setState(() {
-      _items.remove(wishlist);
-    });
+  void _deleteToget(DocumentSnapshot doc) {
+    FirebaseFirestore.instance.collection('toget').doc(doc.id).delete();
   }
 
-  void _toggleToget(WishList wishlist) {
-    setState(() {
-      wishlist.isChosen =
-      !wishlist.isChosen; //isChosen값을 변경하고 setState로 UI를 다시 그림
-    });
+  void _toggleToget(DocumentSnapshot doc) {
+    FirebaseFirestore.instance
+        .collection('toget')
+        .doc(doc.id)
+        .update({'isChosen': !doc['isChosen']});
   }
 }
-
-
-
-
